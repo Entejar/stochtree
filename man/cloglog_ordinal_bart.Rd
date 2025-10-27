@@ -9,14 +9,16 @@ cloglog_ordinal_bart(
   y,
   X_test = NULL,
   n_trees = 50,
-  n_samples_mcmc = 500,
-  n_burnin = 250,
+  num_gfr = 10,
+  num_burnin = 0,
+  num_mcmc = 500,
   n_thin = 1,
   alpha_gamma = 2,
   beta_gamma = 2,
   variable_weights = NULL,
   feature_types = NULL,
-  seed = NULL
+  seed = NULL,
+  num_threads = 1
 )
 }
 \arguments{
@@ -28,9 +30,11 @@ cloglog_ordinal_bart(
 
 \item{n_trees}{Number of trees in the BART ensemble. Default: \code{50}.}
 
-\item{n_samples_mcmc}{Total number of MCMC samples to draw. Default: \code{500}.}
+\item{num_gfr}{Number of GFR samples to draw at the beginning of the sampler. Default: \code{10}.}
 
-\item{n_burnin}{Number of burn-in samples to discard. Default: \code{250}.}
+\item{num_burnin}{Number of burn-in MCMC samples to discard. Default: \code{0}.}
+
+\item{num_mcmc}{Total number of MCMC samples to draw. Default: \code{500}.}
 
 \item{n_thin}{Thinning interval for MCMC samples. Default: \code{1}.}
 
@@ -38,9 +42,13 @@ cloglog_ordinal_bart(
 
 \item{beta_gamma}{Rate parameter for the log-gamma prior on cutpoints. Default: \code{2.0}.}
 
-\item{variable_weights}{Optional vector of variable weights for splitting (default: equal weights).}
+\item{variable_weights}{(Optional) vector of variable weights for splitting (default: equal weights).}
 
-\item{feature_types}{Optional vector indicating feature types (0 for continuous, 1 for categorical; default: all continuous).}
+\item{feature_types}{(Optional) vector indicating feature types (0 for continuous, 1 for categorical; default: all continuous).}
+
+\item{seed}{(Optional) random seed for reproducibility.}
+
+\item{num_threads}{(Optional) Number of threads to use in split evaluations and other compute-intensive operations. Default: 1.}
 }
 \description{
 Run the BART algorithm for ordinal outcomes using a complementary log-log link

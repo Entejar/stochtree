@@ -27,7 +27,8 @@ void sample_gfr_one_iteration_cpp(cpp11::external_pointer<StochTree::ForestDatas
                                   cpp11::doubles variable_weights,
                                   double a_forest, double b_forest,
                                   double global_variance, int leaf_model_int,
-                                  bool keep_forest, int num_features_subsample
+                                  bool keep_forest, int num_features_subsample, 
+                                  int num_threads
 ) {
     // Refactoring completely out of the R interface.
     // Intention to refactor out of the C++ interface in the future.
@@ -54,7 +55,7 @@ void sample_gfr_one_iteration_cpp(cpp11::external_pointer<StochTree::ForestDatas
     else if (leaf_model_int == 1) model_type = StochTree::ModelType::kUnivariateRegressionLeafGaussian;
     else if (leaf_model_int == 2) model_type = StochTree::ModelType::kMultivariateRegressionLeafGaussian;
     else if (leaf_model_int == 3) model_type = StochTree::ModelType::kLogLinearVariance;
-    else if (leaf_model_int == 4) StochTree::Log::Fatal("Ordinal models only support MCMC sampling, not GFR");
+    else if (leaf_model_int == 4) model_type = StochTree::ModelType::kCloglogOrdinal;
     else StochTree::Log::Fatal("Invalid model type");
 
     // Unpack leaf model parameters
@@ -86,13 +87,15 @@ void sample_gfr_one_iteration_cpp(cpp11::external_pointer<StochTree::ForestDatas
 
     // Run one iteration of the sampler
     if (model_type == StochTree::ModelType::kConstantLeafGaussian) {
-        StochTree::GFRSampleOneIter<StochTree::GaussianConstantLeafModel, StochTree::GaussianConstantSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::GaussianConstantLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, feature_types_, cutpoint_grid_size, keep_forest, pre_initialized, true, num_features_subsample);
+        StochTree::GFRSampleOneIter<StochTree::GaussianConstantLeafModel, StochTree::GaussianConstantSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::GaussianConstantLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, feature_types_, cutpoint_grid_size, keep_forest, pre_initialized, true, num_features_subsample, num_threads);
     } else if (model_type == StochTree::ModelType::kUnivariateRegressionLeafGaussian) {
-        StochTree::GFRSampleOneIter<StochTree::GaussianUnivariateRegressionLeafModel, StochTree::GaussianUnivariateRegressionSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::GaussianUnivariateRegressionLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, feature_types_, cutpoint_grid_size, keep_forest, pre_initialized, true, num_features_subsample);
+        StochTree::GFRSampleOneIter<StochTree::GaussianUnivariateRegressionLeafModel, StochTree::GaussianUnivariateRegressionSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::GaussianUnivariateRegressionLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, feature_types_, cutpoint_grid_size, keep_forest, pre_initialized, true, num_features_subsample, num_threads);
     } else if (model_type == StochTree::ModelType::kMultivariateRegressionLeafGaussian) {
-        StochTree::GFRSampleOneIter<StochTree::GaussianMultivariateRegressionLeafModel, StochTree::GaussianMultivariateRegressionSuffStat, int>(*active_forest, *tracker, *forest_samples, std::get<StochTree::GaussianMultivariateRegressionLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, feature_types_, cutpoint_grid_size, keep_forest, pre_initialized, true, num_features_subsample, num_basis);
+        StochTree::GFRSampleOneIter<StochTree::GaussianMultivariateRegressionLeafModel, StochTree::GaussianMultivariateRegressionSuffStat, int>(*active_forest, *tracker, *forest_samples, std::get<StochTree::GaussianMultivariateRegressionLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, feature_types_, cutpoint_grid_size, keep_forest, pre_initialized, true, num_features_subsample, num_threads, num_basis);
     } else if (model_type == StochTree::ModelType::kLogLinearVariance) {
-        StochTree::GFRSampleOneIter<StochTree::LogLinearVarianceLeafModel, StochTree::LogLinearVarianceSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::LogLinearVarianceLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, feature_types_, cutpoint_grid_size, keep_forest, pre_initialized, false, num_features_subsample);
+        StochTree::GFRSampleOneIter<StochTree::LogLinearVarianceLeafModel, StochTree::LogLinearVarianceSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::LogLinearVarianceLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, feature_types_, cutpoint_grid_size, keep_forest, pre_initialized, false, num_features_subsample, num_threads);
+    } else if (model_type == StochTree::ModelType::kCloglogOrdinal) {
+        StochTree::GFRSampleOneIter<StochTree::CloglogOrdinalLeafModel, StochTree::CloglogOrdinalSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::CloglogOrdinalLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, feature_types_, cutpoint_grid_size, keep_forest, pre_initialized, false, num_features_subsample, num_threads);
     }
 }
 
@@ -110,7 +113,7 @@ void sample_mcmc_one_iteration_cpp(cpp11::external_pointer<StochTree::ForestData
                                    cpp11::doubles variable_weights,
                                    double a_forest, double b_forest,
                                    double global_variance, int leaf_model_int,
-                                   bool keep_forest
+                                   bool keep_forest, int num_threads
 ) {
     // Refactoring completely out of the R interface.
     // Intention to refactor out of the C++ interface in the future.
@@ -169,15 +172,15 @@ void sample_mcmc_one_iteration_cpp(cpp11::external_pointer<StochTree::ForestData
 
     // Run one iteration of the sampler
     if (model_type == StochTree::ModelType::kConstantLeafGaussian) {
-        StochTree::MCMCSampleOneIter<StochTree::GaussianConstantLeafModel, StochTree::GaussianConstantSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::GaussianConstantLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, keep_forest, pre_initialized, true);
+        StochTree::MCMCSampleOneIter<StochTree::GaussianConstantLeafModel, StochTree::GaussianConstantSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::GaussianConstantLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, keep_forest, pre_initialized, true, num_threads);
     } else if (model_type == StochTree::ModelType::kUnivariateRegressionLeafGaussian) {
-        StochTree::MCMCSampleOneIter<StochTree::GaussianUnivariateRegressionLeafModel, StochTree::GaussianUnivariateRegressionSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::GaussianUnivariateRegressionLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, keep_forest, pre_initialized, true);
+        StochTree::MCMCSampleOneIter<StochTree::GaussianUnivariateRegressionLeafModel, StochTree::GaussianUnivariateRegressionSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::GaussianUnivariateRegressionLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, keep_forest, pre_initialized, true, num_threads);
     } else if (model_type == StochTree::ModelType::kMultivariateRegressionLeafGaussian) {
-        StochTree::MCMCSampleOneIter<StochTree::GaussianMultivariateRegressionLeafModel, StochTree::GaussianMultivariateRegressionSuffStat, int>(*active_forest, *tracker, *forest_samples, std::get<StochTree::GaussianMultivariateRegressionLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, keep_forest, pre_initialized, true, num_basis);
+        StochTree::MCMCSampleOneIter<StochTree::GaussianMultivariateRegressionLeafModel, StochTree::GaussianMultivariateRegressionSuffStat, int>(*active_forest, *tracker, *forest_samples, std::get<StochTree::GaussianMultivariateRegressionLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, keep_forest, pre_initialized, true, num_threads, num_basis);
     } else if (model_type == StochTree::ModelType::kLogLinearVariance) {
-        StochTree::MCMCSampleOneIter<StochTree::LogLinearVarianceLeafModel, StochTree::LogLinearVarianceSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::LogLinearVarianceLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, keep_forest, pre_initialized, false);
+        StochTree::MCMCSampleOneIter<StochTree::LogLinearVarianceLeafModel, StochTree::LogLinearVarianceSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::LogLinearVarianceLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, keep_forest, pre_initialized, false, num_threads);
     } else if (model_type == StochTree::ModelType::kCloglogOrdinal) {
-        StochTree::MCMCSampleOneIter<StochTree::CloglogOrdinalLeafModel, StochTree::CloglogOrdinalSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::CloglogOrdinalLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, keep_forest, pre_initialized, false);
+        StochTree::MCMCSampleOneIter<StochTree::CloglogOrdinalLeafModel, StochTree::CloglogOrdinalSuffStat>(*active_forest, *tracker, *forest_samples, std::get<StochTree::CloglogOrdinalLeafModel>(leaf_model), *data, *residual, *split_prior, *rng, var_weights_vector, sweep_indices_, global_variance, keep_forest, pre_initialized, false, num_threads);
     }
 }
 
@@ -334,61 +337,6 @@ cpp11::writable::integers sample_without_replacement_integer_cpp(
     return(output);
 }
 
-// ============================================================================
-// ORDINAL AUXILIARY DATA FUNCTIONS
-// ============================================================================
-
-[[cpp11::register]]
-void ordinal_aux_data_initialize_cpp(cpp11::external_pointer<StochTree::ForestTracker> tracker_ptr, StochTree::data_size_t num_observations, int n_levels) {
-    tracker_ptr->InitializeOrdinalAuxData(num_observations, n_levels);
-}
-
-[[cpp11::register]]
-double ordinal_aux_data_get_cpp(cpp11::external_pointer<StochTree::ForestTracker> tracker_ptr, int type_idx, StochTree::data_size_t obs_idx) {
-    return tracker_ptr->GetOrdinalAuxData(type_idx, obs_idx);
-}
-
-[[cpp11::register]]
-void ordinal_aux_data_set_cpp(cpp11::external_pointer<StochTree::ForestTracker> tracker_ptr, int type_idx, StochTree::data_size_t obs_idx, double value) {
-    tracker_ptr->SetOrdinalAuxData(type_idx, obs_idx, value);
-}
-
-[[cpp11::register]]
-cpp11::writable::doubles ordinal_aux_data_get_vector_cpp(cpp11::external_pointer<StochTree::ForestTracker> tracker_ptr, int type_idx) {
-    const std::vector<double>& aux_vec = tracker_ptr->GetOrdinalAuxDataVector(type_idx);
-    cpp11::writable::doubles output(aux_vec.size());
-    for (size_t i = 0; i < aux_vec.size(); i++) {
-        output[i] = aux_vec[i];
-    }
-    return output;
-}
-
-[[cpp11::register]]
-void ordinal_aux_data_set_vector_cpp(cpp11::external_pointer<StochTree::ForestTracker> tracker_ptr, int type_idx, cpp11::doubles values) {
-    std::vector<double>& aux_vec = tracker_ptr->GetOrdinalAuxDataVector(type_idx);
-    if (aux_vec.size() != values.size()) {
-        cpp11::stop("Size mismatch between auxiliary data vector and input values");
-    }
-    for (size_t i = 0; i < values.size(); i++) {
-        aux_vec[i] = values[i];
-    }
-}
-
-[[cpp11::register]]
-void ordinal_aux_data_update_cumsum_exp_cpp(cpp11::external_pointer<StochTree::ForestTracker> tracker_ptr) {
-    // Get auxiliary data vectors
-    const std::vector<double>& gamma = tracker_ptr->GetOrdinalAuxDataVector(2);  // cutpoints gamma
-    std::vector<double>& seg = tracker_ptr->GetOrdinalAuxDataVector(3);    // cumsum exp gamma
-
-    // Update seg (cumulative sum of exp(gamma))
-    for (size_t j = 0; j < seg.size(); j++) {
-        if (j == 0) {
-            seg[j] = 0.0;
-        } else {
-            seg[j] = seg[j - 1] + std::exp(gamma[j - 1]);
-        }
-    }
-}
 
 // ============================================================================
 // ORDINAL SAMPLER FUNCTIONS
@@ -405,10 +353,9 @@ void ordinal_sampler_update_latent_variables_cpp(
     cpp11::external_pointer<StochTree::OrdinalSampler> sampler_ptr,
     cpp11::external_pointer<StochTree::ForestDataset> data_ptr,
     cpp11::external_pointer<StochTree::ColumnVector> outcome_ptr,
-    cpp11::external_pointer<StochTree::ForestTracker> tracker_ptr,
     cpp11::external_pointer<std::mt19937> rng_ptr
 ) {
-    sampler_ptr->UpdateLatentVariables(*data_ptr, outcome_ptr->GetData(), *tracker_ptr, *rng_ptr);
+    sampler_ptr->UpdateLatentVariables(*data_ptr, outcome_ptr->GetData(), *rng_ptr);
 }
 
 [[cpp11::register]]
@@ -416,21 +363,18 @@ void ordinal_sampler_update_gamma_params_cpp(
     cpp11::external_pointer<StochTree::OrdinalSampler> sampler_ptr,
     cpp11::external_pointer<StochTree::ForestDataset> data_ptr,
     cpp11::external_pointer<StochTree::ColumnVector> outcome_ptr,
-    cpp11::external_pointer<StochTree::ForestTracker> tracker_ptr,
     double alpha_gamma,
     double beta_gamma,
     double gamma_0,
     cpp11::external_pointer<std::mt19937> rng_ptr
 ) {
-    sampler_ptr->UpdateGammaParams(*data_ptr, outcome_ptr->GetData(), *tracker_ptr, alpha_gamma, beta_gamma, gamma_0, *rng_ptr);
+    sampler_ptr->UpdateGammaParams(*data_ptr, outcome_ptr->GetData(), alpha_gamma, beta_gamma, gamma_0, *rng_ptr);
 }
 
 [[cpp11::register]]
 void ordinal_sampler_update_cumsum_exp_cpp(
     cpp11::external_pointer<StochTree::OrdinalSampler> sampler_ptr,
-    cpp11::external_pointer<StochTree::ForestTracker> tracker_ptr
+    cpp11::external_pointer<StochTree::ForestDataset> data_ptr
 ) {
-    sampler_ptr->UpdateCumulativeExpSums(*tracker_ptr);
+    sampler_ptr->UpdateCumulativeExpSums(*data_ptr);
 }
-
-
