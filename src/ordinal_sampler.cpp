@@ -3,11 +3,18 @@
 
 namespace StochTree {
 
-double OrdinalSampler::SampleTruncatedExponential(double lambda, std::mt19937& gen) {
+double OrdinalSampler::SampleTruncatedExponential(std::mt19937& gen, double rate, double low, double high) {
   std::uniform_real_distribution<double> unif(0.0, 1.0);
   double u = unif(gen);
-  double a = 1.0 - u * (1.0 - std::exp(-lambda));
-  return -std::log(a) / lambda;
+  if ((low <= 0.0) && (high <= 0.0)) {
+    return sample_exponential(u, rate);
+  } else if ((low <= 0.0) && (high > 0.0)) {
+    return sample_truncated_exponential_high(u, rate, high);
+  } else if ((low > 0.0) && (high <= 0.0)) {
+    return sample_truncated_exponential_low(u, rate, low);
+  } else {
+    return sample_truncated_exponential_low_high(u, rate, low, high);
+  }
 }
 
 void OrdinalSampler::UpdateLatentVariables(ForestDataset& dataset, Eigen::VectorXd& outcome, std::mt19937& gen) {
@@ -31,7 +38,7 @@ void OrdinalSampler::UpdateLatentVariables(ForestDataset& dataset, Eigen::Vector
       Z[i] = 1.0;
     } else {
       double rate = std::exp(gamma[y] + lambda_hat[i]);
-      Z[i] = SampleTruncatedExponential(rate, gen);
+      Z[i] = SampleTruncatedExponential(gen, rate, 0.0, 1.0);
     }
   }
 }
@@ -72,7 +79,9 @@ void OrdinalSampler::UpdateGammaParams(ForestDataset& dataset, Eigen::VectorXd& 
   }
 
   // Set the first gamma parameter to gamma_0 (e.g., 0) for identifiability
-  gamma[0] = gamma_0;
+  // if (K > 2) {
+    gamma[0] = gamma_0;
+  // }
 }
 
 void OrdinalSampler::UpdateCumulativeExpSums(ForestDataset& dataset) {
