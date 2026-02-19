@@ -26,7 +26,7 @@ class StochTreeBARTRegressor(RegressorMixin, BaseEstimator):
         The number of grow-from-root (GFR) iterations to run of the BART model.
     num_burnin : int, default=0
         The number of MCMC iterations of the BART model that will be discarded as "burn-in" samples.
-    num_trees : int, default=100
+    num_mcmc : int, default=100
         The number of retained MCMC iterations to run of the BART model.
     general_params : dict, default=None
         General parameters for the BART model.
@@ -64,11 +64,12 @@ class StochTreeBARTRegressor(RegressorMixin, BaseEstimator):
     Examples
     --------
     >>> from sklearn.datasets import load_boston
-    >>> from stochtree import StochTreeRegressor
+    >>> from stochtree import StochTreeBARTRegressor
     >>> data = load_boston()
     >>> X = data.data
     >>> y = data.target
-    >>> reg = StochTreeBARTRegressor().fit(X, y)
+    >>> reg = StochTreeBARTRegressor()
+    >>> reg.fit(X, y)
     >>> reg.predict(X)
     """
 
@@ -272,7 +273,7 @@ class StochTreeBARTBinaryClassifier(ClassifierMixin, BaseEstimator):
         The number of grow-from-root (GFR) iterations to run of the BART model.
     num_burnin : int, default=0
         The number of MCMC iterations of the BART model that will be discarded as "burn-in" samples.
-    num_trees : int, default=100
+    num_mcmc : int, default=100
         The number of retained MCMC iterations to run of the BART model.
     general_params : dict, default=None
         General parameters for the BART model.
@@ -310,11 +311,12 @@ class StochTreeBARTBinaryClassifier(ClassifierMixin, BaseEstimator):
     Examples
     --------
     >>> from sklearn.datasets import load_wine
-    >>> from stochtree import StochTreeBinaryClassifier
+    >>> from stochtree import StochTreeBARTBinaryClassifier
     >>> data = load_wine()
     >>> X = data.data
     >>> y = data.target
-    >>> clf = StochTreeBARTBinaryClassifier().fit(X, y)
+    >>> clf = StochTreeBARTBinaryClassifier()
+    >>> clf.fit(X, y)
     >>> clf.predict(X)
     """
 
