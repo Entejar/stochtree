@@ -76,10 +76,6 @@ forest_dataset_get_auxiliary_data_vector_cpp <- function(dataset_ptr, dim_idx) {
   .Call(`_stochtree_forest_dataset_get_auxiliary_data_vector_cpp`, dataset_ptr, dim_idx)
 }
 
-forest_dataset_store_auxiliary_data_vector_as_column_cpp <- function(dataset_ptr, output_matrix, dim_idx, matrix_col_idx) {
-  .Call(`_stochtree_forest_dataset_store_auxiliary_data_vector_as_column_cpp`, dataset_ptr, output_matrix, dim_idx, matrix_col_idx)
-}
-
 create_column_vector_cpp <- function(outcome) {
   .Call(`_stochtree_create_column_vector_cpp`, outcome)
 }
@@ -298,6 +294,22 @@ reset_rfx_tracker_cpp <- function(tracker, dataset, residual, rfx_model) {
 
 root_reset_rfx_tracker_cpp <- function(tracker, dataset, residual, rfx_model) {
   invisible(.Call(`_stochtree_root_reset_rfx_tracker_cpp`, tracker, dataset, residual, rfx_model))
+}
+
+sum_cpp <- function(x) {
+  .Call(`_stochtree_sum_cpp`, x)
+}
+
+mean_cpp <- function(x) {
+  .Call(`_stochtree_mean_cpp`, x)
+}
+
+var_cpp <- function(x) {
+  .Call(`_stochtree_var_cpp`, x)
+}
+
+sd_cpp <- function(x) {
+  .Call(`_stochtree_sd_cpp`, x)
 }
 
 active_forest_cpp <- function(num_trees, output_dimension, is_leaf_constant, is_exponentiated) {
